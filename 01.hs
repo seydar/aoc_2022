@@ -8,14 +8,14 @@ type Elf = [Int]
 readProvisions :: IO [Elf]
 readProvisions = do
   input <- getContents
-  let provisions = splitOn "\n\n" input :: [String]
+  let provisions = splitOn "\n\n" input
   return $ map parseElf provisions
 
 parseElf :: String -> Elf
 parseElf = map (\s -> read s :: Int) . lines
 
-partOne = putStrLn . show . foldl max 0 . map sum
-partTwo = putStrLn . show . sum . take 3 . reverse . sort . map sum
+partOne = print . maximum . map sum
+partTwo = print . sum . take 3 . reverse . sort . map sum
 
 main = do
   args <- getArgs
