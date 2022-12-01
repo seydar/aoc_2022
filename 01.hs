@@ -1,35 +1,25 @@
 import System.IO
 import System.Environment
 import Data.List
+import Data.List.Split
 
 type Elf = [Int]
 
-readProvisions :: [Elf] -> IO [Elf]
-readProvisions elves = do
-  done <- isEOF
-  if done
-    then return elves
-    else do
-      elf <- readElf []
-      readProvisions (elf:elves)
+readProvisions :: IO [Elf]
+readProvisions = do
+  input <- getContents
+  let provisions = splitOn "\n\n" input :: [String]
+  return $ map parseElf provisions
 
-readElf :: Elf -> IO Elf
-readElf provisions = do
-  done <- isEOF
-  if done
-    then return provisions
-    else do
-      line <- getLine
-      if line == ""
-        then return provisions
-        else readElf ((read line):provisions)
+parseElf :: String -> Elf
+parseElf = map (\s -> read s :: Int) . lines
 
 partOne = putStrLn . show . foldl max 0 . map sum
 partTwo = putStrLn . show . sum . take 3 . reverse . sort . map sum
 
 main = do
   args <- getArgs
-  elves <- readProvisions [[]]
+  elves <- readProvisions
 
   if (args !! 0) == "one"
     then partOne elves
