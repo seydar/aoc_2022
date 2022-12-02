@@ -2,15 +2,6 @@ cabal-version:       >=1.10
 
 name:                AOC
 version:             0.1.0.0
-synopsis:            AOC 2022
-description:         AOC 2022
--- bug-reports:
-license:             BSD3
-license-file:        LICENSE
-author:              Ari Brown
-maintainer:          ari@aribrown.com
--- copyright:
--- category:
 build-type:          Simple
 
 executable 01
