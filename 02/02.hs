@@ -33,7 +33,7 @@ scoreMatch m@(them, us) = (scoreOutcome m) + (moveValue us)
   where
     scoreOutcome :: Match -> Int
     scoreOutcome (them, us) | (lose them) == us = 0
-                            | them == us        = 3
+                            | (draw them) == us = 3
                             | otherwise         = 6
 
     moveValue us = ord us - 87
