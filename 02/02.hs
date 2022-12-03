@@ -1,50 +1,53 @@
 module Main where
 
-import System.IO
-import System.Environment
-import Data.List.Split
-import Data.Char (ord, chr)
+import System.IO (getContents)
+import System.Environment (getArgs)
 
-type Match = (Char, Char)
+data Shape = Rock | Paper | Scissors
+  deriving (Show, Ord, Eq, Enum)
 
-lose :: Char -> Char
-lose 'A' = 'Z'
-lose 'B' = 'X'
-lose 'C' = 'Y'
+type Match = (Shape, Shape)
 
-draw :: Char -> Char
-draw c = chr $ ord c + 23
+betterShape :: Shape -> Shape
+betterShape Scissors = Rock
+betterShape      shp = succ shp
 
-beat :: Char -> Char
-beat 'A' = 'Y'
-beat 'B' = 'Z'
-beat 'C' = 'X'
+worseShape :: Shape -> Shape
+worseShape Rock = Scissors
+worseShape  shp = pred shp
 
-charTuple :: [String] -> (Char, Char)
-charTuple [a, b] = (a !! 0, b !! 0)
+charToShape "A" = Rock
+charToShape "B" = Paper
+charToShape "C" = Scissors
+charToShape "X" = Rock
+charToShape "Y" = Paper
+charToShape "Z" = Scissors
 
-readMatches :: IO [Match]
-readMatches = do
-  input <- getContents
-  return . map (charTuple . splitOn " ") . lines $ input
+shapeTuple :: [String] -> (Shape, Shape)
+shapeTuple [a, b] = (charToShape a, charToShape b)
 
 scoreMatch :: Match -> Int
 scoreMatch m@(them, us) = (scoreOutcome m) + (moveValue us)
   where
     scoreOutcome :: Match -> Int
-    scoreOutcome (them, us) | (lose them) == us = 0
-                            | (draw them) == us = 3
-                            | otherwise         = 6
+    scoreOutcome (them, us) | (betterShape us) == them = 0
+                            | us == them               = 3
+                            | otherwise                = 6
 
-    moveValue us = ord us - 87
+    moveValue us = fromEnum us + 1
 
 getMove :: Match -> Match
-getMove (them, us) | us == 'X' = (them, lose them)
-                   | us == 'Y' = (them, draw them)
-                   | us == 'Z' = (them, beat them)
+getMove (them, Rock)     = (them, worseShape them)
+getMove (them, Paper)    = (them, them)
+getMove (them, Scissors) = (them, betterShape them)
 
 partOne = print . sum . map scoreMatch
 partTwo = print . sum . map (scoreMatch . getMove)
+
+readMatches :: IO [Match]
+readMatches = do
+  input <- getContents
+  return . map (shapeTuple . words) . lines $ input
 
 main = do
   args <- getArgs

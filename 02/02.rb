@@ -17,27 +17,23 @@ BEAT = {"A" => "Y",
 def score_match(match)
   # ... the score for the outcome of the round (0
   # if you lost, 3 if the round was a draw, and 6 if you won).
-  score = if LOSE[match[0]] == match[1]
-            0
-          elsif match[0].ord == (match[1].ord - 23)
-            3
-          else
-            6
-          end
+  score = ((match[1].ord - match[0].ord) + 2) % 3 * 3
 
   # ... the score for the shape you selected (1 for Rock, 2 for
   # Paper, and 3 for Scissors)...
-  score += match[1].ord - 87
+  score += match[1].ord - 'W'.ord
 end
 
 def pick_move(match)
-  outcome = match[1]
-  if outcome == "X" # lose
-    LOSE[match[0]]
-  elsif outcome == "Y" # draw
-    (match[0].ord + 23).chr
-  else # win
-    BEAT[match[0]]
+  them, outcome = *match
+
+  case outcome
+  when "X"
+    LOSE[them]
+  when "Y"
+    (them.ord + 23).chr
+  when "Z"
+    BEAT[them]
   end
 end
 
