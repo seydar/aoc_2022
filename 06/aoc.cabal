@@ -9,6 +9,7 @@ executable 06
 
   -- other-extensions:
   build-depends:       base >= 4.13,
-                       split >= 0.2
+                       split >= 0.2,
+                       containers >= 0.6.5.1
   -- hs-source-dirs:
   default-language:    Haskell2010
