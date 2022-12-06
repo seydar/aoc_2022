@@ -32,7 +32,7 @@ main = do
   args <- getArgs
   inp  <- getContents
 
-  if (args !! 0) == "one"
-    then print $ partOne inp
-    else print $ partTwo inp
+  case head args of
+    "one" -> print $ partOne inp
+    "two" -> print $ partTwo inp
 
