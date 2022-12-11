@@ -28,20 +28,23 @@ def part_one(tape)
   locations.map { |location| (1 + tape[0, location - 1].sum) * location }.sum
 end
 
-def sprite_visible?(cycle, x)
-  [x - 1, x, x + 1].include? cycle
+def sprite_visible?(position, x)
+  [x - 1, x, x + 1].include? position
 end
 
 def part_two(tape)
-  (1..tape.size).each do |cycle|
-    x = (1 + tape[0, cycle].sum) * cycle
-    if sprite_visible? cycle, x
+  (0..tape.size - 1).each do |cycle|
+    x = 1 + tape[0, cycle].sum
+
+    # `cycle - 1` because the printing position is 0-indexed, but
+    # cyle is 1-indexed
+    if sprite_visible?(cycle % 40, x)
       print "#"
     else
       print "."
     end
 
-    if cycle % 40 == 0
+    if (cycle + 1) % 40 == 0
       puts
     end
   end
