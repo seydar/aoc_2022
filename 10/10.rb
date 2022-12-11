@@ -36,17 +36,10 @@ def part_two(tape)
   (0..tape.size - 1).each do |cycle|
     x = 1 + tape[0, cycle].sum
 
-    # `cycle - 1` because the printing position is 0-indexed, but
-    # cyle is 1-indexed
-    if sprite_visible?(cycle % 40, x)
-      print "#"
-    else
-      print "."
-    end
+    char = sprite_visible?(cycle % 40, x) ? "#" : "."
+    print char
 
-    if (cycle + 1) % 40 == 0
-      puts
-    end
+    puts if (cycle + 1) % 40 == 0
   end
 end
 
@@ -56,6 +49,6 @@ case ARGV[0]
 when "one"
   p part_one(tape)
 when "two"
-  p part_two(tape)
+  part_two(tape)
 end
 
