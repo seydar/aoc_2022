@@ -83,7 +83,7 @@ class Map
   def initialize
     @sensors = []
     @beacons = []
-    @data    = Hash.new {|h, k| h[k] = [] }
+    @data    = Hash.new {|h, k| h[k] = {} }
   end
 
   def add_sensor(pt)
@@ -96,18 +96,12 @@ class Map
     @data[pt.x][pt.y] = :beacon
   end
 
-  def finalize!
-    (min_x..max_x).each {|k| data[k][max_y - 1] ||= nil }
-  end
-
   def max_x; data.keys.max; end
   def min_x; data.keys.min; end
-  def max_y; data.values.map {|v| v.size }.max; end
-  def min_y; data.values.map {|v| v.size }.min; end
+  def max_y; data.values.map {|v| v.keys.max }.max; end
+  def min_y; data.values.map {|v| v.keys.min }.min; end
 
   def to_s
-    finalize!
-
     str = ""
     (0..max_y - 1).each do |y|
       str << "#{y}:\t"
@@ -145,8 +139,6 @@ def parse_input(txt)
     map.add_sensor s
     map.add_beacon b
   end
-
-  map.finalize!
 
   map
 end
