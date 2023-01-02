@@ -144,7 +144,7 @@ def parse_input(txt)
 end
 
 def part_one(map, row)
-  puts map
+  #puts map
   puts "****************************"
 
   blocked = map.sensors.map {|s| s.blocked_area_at row }.reduce(&:+).uniq
@@ -153,8 +153,10 @@ def part_one(map, row)
 end
 
 def part_two(map)
-  #map.sensors.map {|s| s.blocked_area }.reduce(&:+)
-  [map.min_x, map.max_x, map.min_y, map.max_y]
+  min_x, max_x = map.sensors.map {|s| s.x }.min, map.sensors.map {|s| s.x }.max
+  min_y, max_y = map.sensors.map {|s| s.y }.min, map.sensors.map {|s| s.y }.max
+  space = (min_x..max_x).to_a.product((min_y..max_y).to_a)
+  map.sensors.reduce(space) {|space, sensor| space - sensor.blocked_area }
 end
 
 map = parse_input STDIN.read
