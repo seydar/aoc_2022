@@ -103,7 +103,7 @@ class Map
 
   def to_s
     str = ""
-    (0..max_y - 1).each do |y|
+    (0..max_y).each do |y|
       str << "#{y}:\t"
       (min_x..max_x).each do |x|
         case data[x][y]
@@ -144,6 +144,9 @@ def parse_input(txt)
 end
 
 def part_one(map, row)
+  puts map
+  puts "****************************"
+
   blocked = map.sensors.map {|s| s.blocked_area_at row }.reduce(&:+).uniq
   blocked = blocked - map.sensors.map {|s| s.to_a } - map.beacons.map {|b| b.to_a }
   blocked.size
