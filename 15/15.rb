@@ -11,7 +11,11 @@ class Point
 
   # manhattan distance
   def distance(other)
-    (@x - other.x).abs + (@y - other.y).abs
+    if other.is_a? Array
+      (@x - other[0]).abs + (@y - other[1]).abs
+    else
+      (@x - other.x).abs + (@y - other.y).abs
+    end
   end
 
   def ==(other)
@@ -23,15 +27,21 @@ class Point
   end
 end
 
-def diamond(dist)
+def in_range(rng, i, j)
+  return true unless rng
+  [i, j].all? {|a| a >= rng[0] && a <= rng[1] }
+end
+
+def border(dist, offset: [0, 0], restrict: nil)
+  x, y = *offset
+  dist += 1
   timantti = []
   (0..dist).each do |i|
-    (0..(dist - i)).each do |j|
-      timantti << [i, j]
-      timantti << [-i, -j] if i != 0 && j != 0
-      timantti << [-i, j]  if i != 0
-      timantti << [i, -j]  if j != 0
-    end
+    j = dist - i
+    timantti << [x + i, y + j] if in_range(restrict, x + i, y + j)
+    timantti << [x - i, y - j] if i != 0 && j != 0 && in_range(restrict, x - i, y - j)
+    timantti << [x - i, y + j] if i != 0 && in_range(restrict, x - i, y + j)
+    timantti << [x + i, y - j] if j != 0 && in_range(restrict, x + i, y - j)
   end
 
   timantti
@@ -49,26 +59,22 @@ end
 
 class Sensor < Point
   attr_accessor :beacon
-  attr_accessor :area
+  attr_accessor :span
 
   def initialize(x, y, beacon)
     super(x, y)
     @beacon = beacon
-  end
-
-  def blocked_area
-    return @area if @area
-
-    @area = []
-    @area = diamond(distance(@beacon)).map do |x, y|
-      [x + @x, y + @y]
-    end
+    @span = distance @beacon
   end
 
   def blocked_area_at(row)
-    partial_diamond(distance(@beacon), row - @y).map do |x, y|
+    partial_diamond(span, row - @y).map do |x, y|
       [x + @x, y + @y]
     end
+  end
+
+  def border_points(restrict: nil)
+    border span, :offset => [@x, @y], :restrict => restrict
   end
 end
 
@@ -155,8 +161,17 @@ end
 def part_two(map)
   min_x, max_x = map.sensors.map {|s| s.x }.min, map.sensors.map {|s| s.x }.max
   min_y, max_y = map.sensors.map {|s| s.y }.min, map.sensors.map {|s| s.y }.max
-  space = (min_x..max_x).to_a.product((min_y..max_y).to_a)
-  map.sensors.reduce(space) {|space, sensor| space - sensor.blocked_area }
+
+  ret = nil
+  map.sensors.map {|s| s.border_points(:restrict => [0, 4_000_000]) }.flatten(1).each do |pt|
+    too_close = map.sensors.any? do |s|
+      s.distance(pt) <= s.span
+    end
+
+    (ret = pt) and break unless too_close
+  end
+
+  ret[0] * 4_000_000 + ret[1]
 end
 
 map = parse_input STDIN.read
