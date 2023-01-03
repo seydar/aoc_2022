@@ -151,7 +151,7 @@ end
 
 def part_one(map, row)
   #puts map
-  puts "****************************"
+  #puts "****************************"
 
   blocked = map.sensors.map {|s| s.blocked_area_at row }.reduce(&:+).uniq
   blocked = blocked - map.sensors.map {|s| s.to_a } - map.beacons.map {|b| b.to_a }
