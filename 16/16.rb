@@ -61,25 +61,27 @@ class Network
   end
 
   def new_max_path
-    opened = []
-    MAX_TIME.times do |i|
-      time_left = MAX_TIME - i - 1
+    opened  = []
+    current = @valves['AA']
+
+    i = 1
+    while i <= MAX_TIME
+      time_left = MAX_TIME - i
 
       # What do our best moves look like this iteration?
+      # Only look at the current location
       # Don't consider valves with no flow
-      options = paths.filter {|k, ps| k.flow != 0 }
-      options = options.map {|k, ps| [k, ps.filter {|k, d| k.flow != 0 }] }
+      options = paths[current].filter {|v| v.flow != 0 }
 
       # Given how far away the valves are, which will give us the most ROI?
-      options = options.map do |k, ps|
-        new_ps = ps.map do |valve, dist|
-          gain = (time_left - dist) * valve.flow
-          [valve, gain]
-        end.to_h
-        [k, new_ps]
+      options = options.map do |valve, dist|
+        gain = (time_left - dist) * valve.flow
+        [valve, gain]
       end.to_h
 
       pp options
+
+      i += 1
     end
   end
 
