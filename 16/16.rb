@@ -60,6 +60,29 @@ class Network
     @valves[name].tunnels = tunnels.map {|t| @valves[t] }
   end
 
+  def new_max_path
+    opened = []
+    MAX_TIME.times do |i|
+      time_left = MAX_TIME - i - 1
+
+      # What do our best moves look like this iteration?
+      # Don't consider valves with no flow
+      options = paths.filter {|k, ps| k.flow != 0 }
+      options = options.map {|k, ps| [k, ps.filter {|k, d| k.flow != 0 }] }
+
+      # Given how far away the valves are, which will give us the most ROI?
+      options = options.map do |k, ps|
+        new_ps = ps.map do |valve, dist|
+          gain = (time_left - dist) * valve.flow
+          [valve, gain]
+        end.to_h
+        [k, new_ps]
+      end.to_h
+
+      pp options
+    end
+  end
+
   def max_path
     start = @valves['AA']
     solution = {:at     => start,
@@ -172,7 +195,10 @@ end
 
 def part_one(flows)
   flows.compute_paths!
-  flows.max_path[:score]
+  #pp flows.paths.map {|k, paths| [k, paths.filter {|k, d| k.flow != 0 }.map {|k, d| [k, d * k.flow] }.to_h] }
+  #              .filter {|k, v| k.flow != 0 }.to_h
+  #flows.max_path[:score]
+  flows.new_max_path
 end
 
 flows = parse_flows STDIN.read
