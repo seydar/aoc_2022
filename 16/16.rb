@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-MAX_TIME = 30
-
 class Valve
   attr_accessor :name
   attr_accessor :flow
@@ -60,60 +58,7 @@ class Network
     @valves[name].tunnels = tunnels.map {|t| @valves[t] }
   end
 
-  def new_max_path
-    opened  = []
-    current = @valves['AA']
-    score = 0
-
-    #order = ["DD", "BB", "JJ", "HH", "EE", "CC"]
-    i = 1
-    while i <= MAX_TIME
-      time_left = MAX_TIME - i
-
-      puts "currently on #{current.inspect} (#{time_left})"
-
-      # What do our best moves look like this iteration?
-      # Only look at the current location
-      # Don't consider valves with no flow
-      # Don't consider valves we've already opened
-      options = paths[current].filter {|v| v.flow != 0 }
-      options = options.filter {|v| not opened.include?(v) }
-
-      # Given how far away the valves are, which will give us the most ROI?
-      options = options.map do |valve, dist|
-        gain = (time_left - dist) * valve.flow
-        [valve, gain]
-      end.to_h
-      pp options
-
-      # Go to the best option
-      seuraava, gain = options.max_by {|valve, score| score }
-
-      if order ||= nil
-        seuraava = (o = order.shift) ? @valves[o] : nil
-        gain = options[seuraava]
-      end
-
-      if seuraava
-        puts "\tnext move: #{seuraava.inspect} (#{paths[current][seuraava]} min away)"
-
-        # Skip forward in time (1 minute for the distance, plus 1 for opening it)
-        i += paths[current][seuraava] 
-        i += 1
-
-        opened << seuraava
-        current = seuraava
-        score  += gain
-      else
-        puts "\tno more moves to make. staying put at #{current.inspect}"
-        i += 1
-      end
-    end
-
-    score
-  end
-
-  def max_path
+  def max_path(max_time=30)
     start = {:at => @valves['AA'],
              :score => 0,
              :time => 1,
@@ -121,12 +66,11 @@ class Network
     queue = [start]
     best = Hash.new {|h, k| h[k] = 0 }
 
-    #order = ["DD", "BB", "JJ", "HH", "EE", "CC"]
     until queue.empty?
       from = queue.shift
-      next if from[:time] > MAX_TIME
+      next if from[:time] > max_time
 
-      time_left = MAX_TIME - from[:time]
+      time_left = max_time - from[:time]
 
       # What do our best moves look like this iteration?
       # Only look at the current location
@@ -153,7 +97,7 @@ class Network
       end
     end
 
-    best.max_by {|k, v| v }
+    best
   end
 
   def inspect
@@ -192,14 +136,19 @@ def parse_flows(inp)
 end
 
 def part_one(flows)
-  flows.compute_paths!
-  #pp flows.paths.map {|k, paths| [k, paths.filter {|k, d| k.flow != 0 }.map {|k, d| [k, d * k.flow] }.to_h] }
-  #              .filter {|k, v| k.flow != 0 }.to_h
-  flows.max_path
-  #flows.new_max_path
+  best = flows.max_path 30
+  best.max_by {|k, v| v }
+end
+
+def part_two(flows)
+  best = flows.max_path 26
+  pairs = best.to_a.combination(2).filter {|(k1, v1), (k2, v2)| k1 & k2 == [] }
+  a, b = pairs.max_by {|(k1, v1), (k2, v2)| v1 + v2 }
+  a[1] + b[1]
 end
 
 flows = parse_flows STDIN.read
+flows.compute_paths!
 
 case ARGV[0]
 when "one"
