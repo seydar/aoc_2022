@@ -114,78 +114,46 @@ class Network
   end
 
   def max_path
-    start = @valves['AA']
-    solution = {:at     => start,
-                :score  => 0,
-                :opened => [],
-                :path   => [start.name],
-                :time   => 1}
-    queue = [solution]
+    start = {:at => @valves['AA'],
+             :score => 0,
+             :time => 1,
+             :opened => []}
+    queue = [start]
+    best = Hash.new {|h, k| h[k] = 0 }
 
-    # For every timestamp, there can only be one best answer that has us at a
-    # give valve
-    best  = {}
-
+    #order = ["DD", "BB", "JJ", "HH", "EE", "CC"]
     until queue.empty?
       from = queue.shift
-      next if from[:time] == MAX_TIME
-      #next if best[from[:at]] && from[:score] < best[from[:at]][:score]
+      next if from[:time] > MAX_TIME
 
-      puts "investigating #{from[:at].inspect} with #{from[:score]} (#{from[:path].join ", "})"
+      time_left = MAX_TIME - from[:time]
 
-      # open it
-      if from[:at].flow == 0
-        puts "\tnot opening a valve with 0 flow"
-      elsif !from[:opened].include?(from[:at])
-        puts "\topening valve"
-        next_sol = {}
-        next_sol[:at] = from[:at]
-        next_sol[:time] = from[:time] + 1
-        next_sol[:score] = from[:score] + from[:at].flow * (MAX_TIME - from[:time])
-        next_sol[:opened] = from[:opened] + [from[:at]]
-        next_sol[:path] = from[:path] + [:open]
+      # What do our best moves look like this iteration?
+      # Only look at the current location
+      # Don't consider valves with no flow
+      # Don't consider valves we've already opened
+      options = paths[from[:at]].filter {|v| v.flow != 0 }
+      options = options.filter {|v| not from[:opened].include?(v) }
 
-        if best[next_sol[:at]]
-          if next_sol[:score] >= best[next_sol[:at]][:score]
-            puts "\tnew best score! #{next_sol[:score]} @ #{next_sol[:time]} min"
-            best[next_sol[:at]] = next_sol
-          end
-        else
-          puts "\tnew best score! #{next_sol[:score]} @ #{next_sol[:time]} min"
-          best[next_sol[:at]] = next_sol
-        end
-        
-        puts "\tadding to the queue"
-        queue << next_sol
-      else
-        puts "\talready opened"
-      end
+      # Given how far away the valves are, which will give us the most ROI?
+      options = options.map do |valve, dist|
+        gain = (time_left - dist) * valve.flow
+        [valve, gain]
+      end.to_h
 
-      # visit each of the other tunnels
-      from[:at].tunnels.each do |valve|
-        next_sol = from.dup
-        next_sol[:at] = valve
-        next_sol[:time] += 1
-        next_sol[:path] = from[:path] + [valve.name]
+      options.each do |valve, gain|
+        sol = {:at => valve,
+               :time => from[:time] + paths[from[:at]][valve] + 1,
+               :score => from[:score] + gain,
+               :opened => from[:opened] + [valve]}
+        queue << sol
 
-        if best[valve]
-          if next_sol[:score] > best[valve][:score]
-            best[valve] = next_sol
-            queue << next_sol
-            puts "\tmoving to #{next_sol[:at].inspect}"
-          else
-            puts "\t#{valve.inspect} no better than a previous visit"
-          end
-        else
-          best[valve] = next_sol
-          queue << next_sol
-          puts "\tmoving to #{valve.inspect}"
-        end
+        key = sol[:opened].sort_by {|v| v.name }
+        best[key] = sol[:score] if sol[:score] > best[key]
       end
     end
 
-    pp best.map {|k, v| [k, v[:score], v[:time]] }
-    best.max_by {|k, sol| sol[:score] }[1]
+    best.max_by {|k, v| v }
   end
 
   def inspect
@@ -227,8 +195,8 @@ def part_one(flows)
   flows.compute_paths!
   #pp flows.paths.map {|k, paths| [k, paths.filter {|k, d| k.flow != 0 }.map {|k, d| [k, d * k.flow] }.to_h] }
   #              .filter {|k, v| k.flow != 0 }.to_h
-  #flows.max_path[:score]
-  flows.new_max_path
+  flows.max_path
+  #flows.new_max_path
 end
 
 flows = parse_flows STDIN.read
