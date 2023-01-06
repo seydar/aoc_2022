@@ -63,26 +63,54 @@ class Network
   def new_max_path
     opened  = []
     current = @valves['AA']
+    score = 0
 
+    #order = ["DD", "BB", "JJ", "HH", "EE", "CC"]
     i = 1
     while i <= MAX_TIME
       time_left = MAX_TIME - i
 
+      puts "currently on #{current.inspect} (#{time_left})"
+
       # What do our best moves look like this iteration?
       # Only look at the current location
       # Don't consider valves with no flow
+      # Don't consider valves we've already opened
       options = paths[current].filter {|v| v.flow != 0 }
+      options = options.filter {|v| not opened.include?(v) }
 
       # Given how far away the valves are, which will give us the most ROI?
       options = options.map do |valve, dist|
         gain = (time_left - dist) * valve.flow
         [valve, gain]
       end.to_h
-
       pp options
 
-      i += 1
+      # Go to the best option
+      seuraava, gain = options.max_by {|valve, score| score }
+
+      if order ||= nil
+        seuraava = (o = order.shift) ? @valves[o] : nil
+        gain = options[seuraava]
+      end
+
+      if seuraava
+        puts "\tnext move: #{seuraava.inspect} (#{paths[current][seuraava]} min away)"
+
+        # Skip forward in time (1 minute for the distance, plus 1 for opening it)
+        i += paths[current][seuraava] 
+        i += 1
+
+        opened << seuraava
+        current = seuraava
+        score  += gain
+      else
+        puts "\tno more moves to make. staying put at #{current.inspect}"
+        i += 1
+      end
     end
+
+    score
   end
 
   def max_path
