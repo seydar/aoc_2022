@@ -175,9 +175,7 @@ class Map
   end
 
   def rock_height
-    data.map do |column|
-      column.map {|v| v.nil? ? " " : v }.join
-    end.map {|s| s.strip.size }.max
+    top_of_rocks + 1
   end
 end
 
@@ -190,6 +188,11 @@ def stack_rocks(stream, n)
 
   until map.rocks_seen == n
     map.move
+
+    if map.rocks_seen >= n - 1
+      puts map
+      puts "@@@@@@@@@@@@@@@@@"
+    end
   end
 
   map.rock_height
