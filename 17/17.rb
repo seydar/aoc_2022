@@ -167,28 +167,13 @@ class Map
     top_lines = @data.map {|ys| ys[-12..-1] }
     key = [rocks_seen % ROCKS.size, (@time / 2) % @stream.size, top_lines]
 
-    if @cache[key]
-
-      if @cache[key][:state] == :initial
-        # Update the cache
-        old = @cache[key]
-        @cache[key] = {:height => rock_height - old[:height], 
-                       :time   => @time - old[:time],
-                       :rocks  => rocks_seen - old[:rocks],
-                       :state  => :final}
-
-      # :final, so we can take advantage of the tally now
-      elsif @cache[key][:rocks] + rocks_seen <= limit
-        @base += @cache[key][:height]
-        @time += @cache[key][:time]
-        @rocks_seen += @cache[key][:rocks]
-      end
-
+    if @cache[key] && rocks_seen - @cache[key][:rocks] > 0
+      cycles = (limit - rocks_seen) / (rocks_seen - @cache[key][:rocks])
+      @base += cycles * (rock_height - @cache[key][:height])
+      @rocks_seen += cycles * (rocks_seen - @cache[key][:rocks])
     else
       @cache[key] = {:height => rock_height, 
-                     :time   => @time,
-                     :rocks  => rocks_seen, 
-                     :state  => :initial}
+                     :rocks  => rocks_seen}
     end
   end
 
@@ -235,7 +220,7 @@ def stack_rocks(stream, n)
   map = Map.new stream
   map.limit = n
 
-  until map.rocks_seen == n
+  until map.rocks_seen >= n
     map.move
   end
 
@@ -243,19 +228,25 @@ def stack_rocks(stream, n)
 end
 
 def part_one(stream)
-  stack_rocks stream, ARGV[1].to_i
+  stack_rocks stream, 2022
 end
 
 def part_two(stream)
   stack_rocks stream, 1_000_000_000_000
 end
 
+def time
+  start = Time.now
+  res = yield
+  [Time.now - start, res]
+end
+
 stream = parse_stream STDIN.read
 
 case ARGV[0]
 when "one"
-  p part_one(stream)
+  p(time { part_one(stream) })
 when "two"
-  p part_two(stream)
+  p(time { part_two(stream) })
 end
 
