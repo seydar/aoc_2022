@@ -147,14 +147,14 @@ class Map
     if overlap? || below_floor?
       undo :down
       merge_rock!
-      use_cache!
+      update_cache!
       next_rock!
     end
 
     @time += 1
   end
 
-  def use_cache!
+  def update_cache!
     # Chop off the part of the map that we don't need
     # (save memory)
     new_base = find_base
