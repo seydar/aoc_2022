@@ -66,6 +66,7 @@ class Map
   attr_accessor :time
   attr_accessor :rocks_seen
   attr_accessor :stream
+  attr_accessor :base
 
   def initialize(stream)
     @data = WIDTH.times.map { [] } # @data[x][y]
@@ -73,6 +74,7 @@ class Map
     @current_rock = nil
     @rocks_seen = -1
     @stream = stream
+    @base = 0
 
     next_rock!
   end
@@ -95,7 +97,8 @@ class Map
     @rocks_seen += 1
     @current_rock = Rock.new ROCKS[@rocks_seen % ROCKS.size]
 
-    #p "top of rocks: #{top_of_rocks}"
+    p "@base: #{@base}"
+    p "top of rocks: #{top_of_rocks}"
     #p "current rock height: #{current_rock.length}"
     current_rock.tl[0] = [2, WIDTH - current_rock.width].min
     current_rock.tl[1] = top_of_rocks + current_rock.length + 3
@@ -142,10 +145,24 @@ class Map
     if overlap? || below_floor?
       undo :down
       merge_rock!
+
+      new_base = find_base
+      if new_base > 0
+        puts "@base is #{@base}"
+        @base += new_base
+        puts "about to chop off #{new_base}"
+
+        @data = @data.map {|ys| ys[new_base..-1] }
+      end
+
       next_rock!
     end
 
     @time += 1
+  end
+
+  def find_base
+    data.map {|ys| ys.rindex "#" }.map {|v| v.nil? ? 0 : v }.min
   end
 
   def undo(dir)
@@ -175,7 +192,10 @@ class Map
   end
 
   def rock_height
-    top_of_rocks + 1
+    #data.map do |column|
+    #  column.map {|v| v.nil? ? " " : v }.join
+    #end.map {|s| s.strip.size }.max + @base
+    top_of_rocks + 1 + @base
   end
 end
 
@@ -191,7 +211,7 @@ def stack_rocks(stream, n)
 
     if map.rocks_seen >= n - 1
       puts map
-      puts "@@@@@@@@@@@@@@@@@"
+      puts "@@@@@@@@@@@@@@@@@@@@@"
     end
   end
 
