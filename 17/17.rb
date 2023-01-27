@@ -185,14 +185,22 @@ def parse_stream(inp)
   inp.strip.split("").map {|d| d == ">" ? :right : :left }
 end
 
-def part_one(stream)
+def stack_rocks(stream, n)
   map = Map.new stream
 
-  until map.rocks_seen == ARGV[1].to_i
+  until map.rocks_seen == n
     map.move
   end
 
   map.rock_height
+end
+
+def part_one(stream)
+  stack_rocks stream, ARGV[1].to_i
+end
+
+def part_two(stream)
+  stack_rocks stream, 1_000_000_000_000
 end
 
 stream = parse_stream STDIN.read
