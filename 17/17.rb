@@ -67,6 +67,8 @@ class Map
   attr_accessor :rocks_seen
   attr_accessor :stream
   attr_accessor :base
+  attr_accessor :cache
+  attr_accessor :limit
 
   def initialize(stream)
     @data = WIDTH.times.map { [] } # @data[x][y]
@@ -75,6 +77,8 @@ class Map
     @rocks_seen = -1
     @stream = stream
     @base = 0
+    @cache = {}
+    @limit = nil
 
     next_rock!
   end
@@ -97,12 +101,10 @@ class Map
     @rocks_seen += 1
     @current_rock = Rock.new ROCKS[@rocks_seen % ROCKS.size]
 
-    p "@base: #{@base}"
-    p "top of rocks: #{top_of_rocks}"
-    #p "current rock height: #{current_rock.length}"
+    #p "@base: #{@base}"
+    #p "top of rocks: #{top_of_rocks}"
     current_rock.tl[0] = [2, WIDTH - current_rock.width].min
     current_rock.tl[1] = top_of_rocks + current_rock.length + 3
-    #p "tl: #{current_rock.tl}"
   end
 
   def top_of_rocks
@@ -145,20 +147,49 @@ class Map
     if overlap? || below_floor?
       undo :down
       merge_rock!
-
-      new_base = find_base
-      if new_base > 0
-        puts "@base is #{@base}"
-        @base += new_base
-        puts "about to chop off #{new_base}"
-
-        @data = @data.map {|ys| ys[new_base..-1] }
-      end
-
+      use_cache!
       next_rock!
     end
 
     @time += 1
+  end
+
+  def use_cache!
+    # Chop off the part of the map that we don't need
+    # (save memory)
+    new_base = find_base
+    if new_base > 0
+      @base += new_base
+      @data = @data.map {|ys| ys[new_base..-1] }
+    end
+
+    # Is there a cycle?
+    top_lines = @data.map {|ys| ys[-12..-1] }
+    key = [rocks_seen % ROCKS.size, (@time / 2) % @stream.size, top_lines]
+
+    if @cache[key]
+
+      if @cache[key][:state] == :initial
+        # Update the cache
+        old = @cache[key]
+        @cache[key] = {:height => rock_height - old[:height], 
+                       :time   => @time - old[:time],
+                       :rocks  => rocks_seen - old[:rocks],
+                       :state  => :final}
+
+      # :final, so we can take advantage of the tally now
+      elsif @cache[key][:rocks] + rocks_seen <= limit
+        @base += @cache[key][:height]
+        @time += @cache[key][:time]
+        @rocks_seen += @cache[key][:rocks]
+      end
+
+    else
+      @cache[key] = {:height => rock_height, 
+                     :time   => @time,
+                     :rocks  => rocks_seen, 
+                     :state  => :initial}
+    end
   end
 
   def find_base
@@ -192,9 +223,6 @@ class Map
   end
 
   def rock_height
-    #data.map do |column|
-    #  column.map {|v| v.nil? ? " " : v }.join
-    #end.map {|s| s.strip.size }.max + @base
     top_of_rocks + 1 + @base
   end
 end
@@ -205,14 +233,10 @@ end
 
 def stack_rocks(stream, n)
   map = Map.new stream
+  map.limit = n
 
   until map.rocks_seen == n
     map.move
-
-    if map.rocks_seen >= n - 1
-      puts map
-      puts "@@@@@@@@@@@@@@@@@@@@@"
-    end
   end
 
   map.rock_height
